@@ -8,7 +8,7 @@ Run the following commands:
 
 ```r
 ## Install CRAN packages
-install.packages(c('data.table','dplyr','ggplot2', 'parallel', 'magrittr', 'tidyr'))
+install.packages(c('data.table','dplyr','ggplot2', 'magrittr', 'tidyr'))
 
 ## Install Bioconductor packages
 source('http://bioconductor.org/biocLite.R')
