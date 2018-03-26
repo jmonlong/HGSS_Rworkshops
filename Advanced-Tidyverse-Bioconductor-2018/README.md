@@ -23,3 +23,8 @@ Download it [here](https://github.com/jmonlong/HGSS_Rworkshops/raw/master/Advanc
 ```r
 download.file('https://github.com/jmonlong/HGSS_Rworkshops/raw/master/Advanced-Tidyverse-Bioconductor-2018/gencodeForWorkshop.tsv.gz','gencodeForWorkshop.tsv.gz')
 ```
+
+## Slides
+
+- `HGSS-Rworkshop2018-advanced.pdf` contains the slides.
+- `HGSS-Rworkshop2018-advanced.tex` contains the LaTeX source.
