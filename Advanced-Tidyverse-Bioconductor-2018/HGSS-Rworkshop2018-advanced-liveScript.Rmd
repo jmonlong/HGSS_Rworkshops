@@ -1,0 +1,387 @@
+---
+title: "HGSS Workshop - Advanced R 2018 - Tidyverse and Bioconductor"
+author: Jean Monlong
+date: March 26, 2018
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Maybe you don't realize yet, but R Markdown is awesome and you need it! I'll use it for today's workshop so that you can have a look at what it does and hopefully show you it's easy and useful.
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Reading the Gencode file
+
+```{r}
+download.file('https://github.com/jmonlong/HGSS_Rworkshops/raw/master/Advanced-Tidyverse-Bioconductor-2018/gencodeForWorkshop.tsv.gz','gencodeForWorkshop.tsv.gz')
+
+gc.df = read.table('gencodeForWorkshop.tsv.gz', header=TRUE, sep='\t', as.is=TRUE)
+
+library(data.table)
+gc.dt = fread('gunzip -c gencodeForWorkshop.tsv.gz')
+gc.df = as.data.frame(gc.df)
+
+head(gc.df)
+```
+
+## Computing gene type summary
+
+Now we want to compute, for each gene type:
+
+- the number of genes
+- the average gene size
+- the proportion of genes larger than 1 Kbp
+
+### Example for one gene type
+
+Let's practice with one gene type.
+
+```{r}
+gc.pc = subset(gc.df, gene.type=='protein_coding')
+nrow(gc.pc)
+nb.genes = length(unique(gc.pc$gene))
+gene.mean.size = mean(gc.pc$end - gc.pc$start)
+gene.gt1kb = mean( (gc.pc$end - gc.pc$start) > 1000)
+data.frame(gene.type='protein_coding', nb.genes =nb.genes, gene.mean.size=gene.mean.size, gene.gt1kb=gene.gt1kb)
+```
+
+### Loop with `lapply` rather than `for`/`while` loops 
+
+Let's loop across gene types and bind the results into a *data.frame*:
+
+```{r}
+gt.s = lapply(unique(gc.df$gene.type), function(gt){
+  gc.pc = subset(gc.df, gene.type==gt)
+  nb.genes = length(unique(gc.pc$gene))
+  gene.mean.size = mean(gc.pc$end - gc.pc$start)
+  gene.gt1kb = mean( (gc.pc$end - gc.pc$start) > 1000)
+  data.frame(gene.type=gt, nb.genes =nb.genes, gene.mean.size=gene.mean.size, gene.gt1kb=gene.gt1kb)
+})
+
+gt.s = do.call(rbind, gt.s)
+head(gt.s)
+```
+
+### Same with genes in chr Y
+
+Subsetting the genes by gene type AND in chr Y.
+
+```{r}
+gt.y.s = lapply(unique(gc.df$gene.type), function(gt){
+  gc.pc = subset(gc.df, gene.type==gt & chr=='chrY')
+  nb.genes = length(unique(gc.pc$gene))
+  gene.mean.size = mean(gc.pc$end - gc.pc$start)
+  gene.gt1kb = mean( (gc.pc$end - gc.pc$start) > 1000)
+  data.frame(gene.type=gt, nb.genes =nb.genes, gene.mean.size=gene.mean.size, gene.gt1kb=gene.gt1kb)
+})
+
+gt.y.s = do.call(rbind, gt.y.s)
+head(gt.y.s)
+```
+
+### With functions
+
+```{r}
+genetypeStats <- function(df){
+  nb.genes = length(unique(df$gene))
+  gene.mean.size = mean(df$end - df$start)
+  gene.gt1kb = mean( (df$end - df$start) > 1000)
+  data.frame(nb.genes =nb.genes, gene.mean.size=gene.mean.size, gene.gt1kb=gene.gt1kb)
+}
+
+## All genes
+gt.s = lapply(unique(gc.df$gene.type), function(gt){
+  data.frame(gene.type=gt, genetypeStats(subset(gc.df, gene.type==gt)))
+})
+gt.s = do.call(rbind, gt.s)
+head(gt.s)
+
+## Genes in Y
+gt.y.s = lapply(unique(gc.df$gene.type), function(gt){
+  data.frame(gene.type=gt, genetypeStats(subset(gc.df, gene.type==gt & chr=='chrY')))
+})
+gt.y.s = do.call(rbind, gt.y.s)
+head(gt.y.s)
+```
+
+### Parallelize
+
+```{r}
+library(parallel)
+gt.s = mclapply(unique(gc.df$gene.type), function(gt){
+  data.frame(gene.type=gt, genetypeStats(subset(gc.df, gene.type==gt)))
+}, mc.cores=2)
+gt.s = do.call(rbind, gt.s)
+head(gt.s)
+```
+
+### Pipes and *dplyr*
+
+Now let's try using the grammar provided by [dplyr](http://dplyr.tidyverse.org/).
+
+First, we want to show the top 10 genes with the most exons.
+
+Without pipes or *dplyr* we could do:
+
+```{r}
+head(gc.df[order(-gc.df$nb.exon),], 10)
+```
+
+With *dplyr*:
+
+```{r}
+library(dplyr)
+gc.df %>% arrange(desc(nb.exon)) %>% head(10)
+```
+
+To compute the gene type stats using the function that we defined before we can use `group_by` and `do`:
+
+```{r}
+gt.s = gc.df %>% group_by(gene.type) %>% do(genetypeStats(.)) %>% arrange(desc(nb.genes))
+head(gt.s)
+
+gt.y.s = gc.df %>% filter(chr=='chrY') %>% group_by(gene.type) %>% do(genetypeStats(.)) %>% arrange(desc(nb.genes))
+```
+
+Let's try with `summarize` instead of the function.
+
+```{r, eval=FALSE}
+gt.s = gc.df %>% group_by(gene.type) %>% summarize(nb.genes=length(unique(gene)), 
+                                                   gene.mean.size=mean(end-start),
+                                                   gene.gt1kb=mean((end-start)>1000))
+gt.s %>% arrange(desc(nb.genes)) %>% head
+```
+
+### Graphs with *ggplot2*
+
+```{r}
+library(ggplot2)
+````
+
+First, an histogram with the gene size distribution, colored by gene type.
+
+```{r}
+ggplot(gc.df, aes(x=end-start, fill=gene.type)) + geom_histogram()
+```
+
+To make it a bit nicer, we can change the "theme", log10 scale the x-axis, rename the x-axis and y-axis.
+
+```{r}
+ggplot(gc.df, aes(x=end-start, fill=gene.type)) + geom_histogram() + theme_bw() + scale_x_log10() + xlab('gene size (bp)') + ylab('number of genes')
+```
+
+We could also plot only the gene types with the most genes.
+
+```{r}
+top.gt.s = gt.s %>% arrange(desc(nb.genes)) %>% head
+gc.df %>% filter(gene.type %in% top.gt.s$gene.type) %>% ggplot(aes(x=end-start, fill=gene.type)) + geom_histogram() + theme_bw() + scale_x_log10() + xlab('gene size (bp)') + ylab('number of genes') + scale_fill_brewer(palette='Set1')
+```
+
+Now we want the number of genes per chromosome and gene type. 
+First we need to prepare a *data.frame* with *dplyr*, then we'll plug it to `ggplot`.
+
+```{r}
+gc.df %>% group_by(chr, gene.type) %>% summarize(nb.genes=length(unique(gene))) %>% ggplot( aes(x=chr, y=nb.genes, fill=gene.type)) + geom_bar(stat='identity') + theme_bw()
+
+ggplot(gc.df, aes(x=chr, fill=gene.type)) + geom_bar() + theme_bw()
+
+gc.df %>% filter(gene.type %in% top.gt.s$gene.type) %>% group_by(chr, gene.type) %>% summarize(nb.genes=length(unique(gene))) %>% ggplot( aes(x=chr, y=nb.genes, fill=gene.type)) + geom_bar(stat='identity') + theme_bw()
+```
+
+Changing chr names and order.
+
+```{r}
+gc.df = gc.df %>% mutate(chr.ord=gsub('chr','', chr), chr.ord=factor(chr.ord, levels=c(1:22, 'X','Y','M')))
+gc.df %>% filter(gene.type %in% top.gt.s$gene.type) %>% group_by(chr.ord, gene.type) %>% summarize(nb.genes=length(unique(gene))) %>% ggplot( aes(x=chr.ord, y=nb.genes, fill=gene.type)) + geom_bar(stat='identity') + theme_bw()
+```
+
+## Bioconductor
+
+### GenomicRanges package
+
+Creating and manipulating *GRanges*, an example with one region.
+
+```{r}
+library(GenomicRanges)
+gr = GRanges('chr1:103-404')
+gr
+width(gr)
+promoters(gr)
+```
+
+To "convert" a *data.frame* into a *GRanges*, for example for protein coding genes in chr 1:
+
+```{r}
+gc.chr1.pc.gr = makeGRangesFromDataFrame(subset(gc.df, gene.type=='protein_coding' & chr=='chr1'),keep.extra.columns=TRUE)
+## or with pipes
+gc.chr1.pc.gr = gc.df %>% filter(gene.type=='protein_coding', chr=='chr1') %>% makeGRangesFromDataFrame(keep.extra.columns=TRUE)
+gc.chr1.pc.gr
+```
+
+Now, we want to get the TSS location using the `promoters` function and defining the promoter region as the 1bp downstream of the TSS.
+
+```{r}
+tss.gr = promoters(gc.chr1.pc.gr, upstream=0, downstream=1)
+tss.gr
+```
+
+### AnnotationHub
+
+Using AnnotationHub we'll download histone mark data, CpG island location and methylation levels across the genome.
+
+First, H3K4me3 peaks for Gm12878.
+
+```{r}
+library(AnnotationHub)
+ah = AnnotationHub()
+query(ah, c('H3K4me3', 'Gm12878', 'hg19'))
+his.gr = ah[["AH23256"]]
+his.gr
+```
+
+Now, CpG islands and methylation.
+
+```{r}
+query(ah, c('CpG', 'Islands', 'hg19'))
+cpg.gr = ah[["AH5086"]]
+cpg.gr
+query(ah, c('methylation','WGBS', 'hg19'))
+meth.bw = ah[["AH49492"]]
+meth.bw
+```
+
+Expand CpG islands by 10 Kbp. We'll use this later to import and visualize methylation around CpG islands.
+
+```{r}
+cpg.region.gr = resize(cpg.gr, width=width(cpg.gr)+1e4, fix='center')
+cpg.gr
+cpg.region.gr
+```
+
+Select 1000 random CpG islands
+
+```{r}
+cpg.1k.gr = cpg.gr[sample.int(length(cpg.gr), 1000)]
+cpg.region.1k.gr = resize(cpg.1k.gr, width=width(cpg.1k.gr)+1e4, fix='center')
+```
+
+Now we can import the methylation data in these regions:
+
+```{r}
+meth.bw
+meth.gr = import(meth.bw, which=cpg.region.1k.gr)
+meth.gr
+```
+
+### Heatmaps
+
+We want to represent the histone mark location in relation to the TSS. 
+Then we'll represent the methylation in and around CpG islands.
+
+```{r}
+library(EnrichedHeatmap)
+
+mathm = normalizeToMatrix(his.gr, tss.gr, value_column = "score", extend = 5000, mean_mode = "w0", w = 50)
+EnrichedHeatmap(mathm)
+
+mathm2 = normalizeToMatrix(meth.gr, cpg.1k.gr, value_column = "score", mean_mode = "absolute", extend = 5000, w = 50, background = NA)
+EnrichedHeatmap(mathm2)
+```
+
+### Overlapping regions
+
+For each gene type, how many genes overlap an H3K4me3 histone mark in Gm12878 ?
+
+```{r}
+gene.his = lapply(unique(gc.df$gene.type), function(gt){
+  gt.gr = makeGRangesFromDataFrame(subset(gc.df, gene.type==gt))
+  gt.gr = subsetByOverlaps(gt.gr, his.gr)
+  data.frame(gene.type=gt, nb.genes.his=length(gt.gr))
+})
+gene.his = do.call(rbind, gene.his)
+head(gene.his)
+```
+
+Here we performed an overlap for each gene type. 
+In my experience it's more efficient to do one overlap and then further analysis (if possible).
+For example, we could first select genes that overlap and then count how many there are for each gene type.
+
+```{r}
+gc.gr = makeGRangesFromDataFrame(gc.df, keep.extra.columns = TRUE)
+gc.his.gr = subsetByOverlaps(gc.gr, his.gr)
+gc.his.gr
+
+gc.his.gr %>% as.data.frame %>% group_by(gene.type) %>% summarize(nb.genes.his=n())
+```
+
+We can do the same with the `findOverlaps`.
+In this example, it's a bit of an overkill but many time you need more than what `subsetByOverlaps`/`countOverlaps` functions can provide.
+
+```{r}
+ol = findOverlaps(gc.gr, his.gr)
+ol
+
+ol %>% as.data.frame %>% mutate(gene.type=gc.gr$gene.type[queryHits]) %>% group_by(gene.type) %>% summarize(nb.genes.his=n())
+```
+
+### GO enrichment
+
+We want to test for GO enrichment in the protein-coding genes overlapping histone peaks with a score higher than 900.
+
+```{r}
+genes.his900.gr = gc.df %>% filter(gene.type=='protein_coding') %>% makeGRangesFromDataFrame(keep.extra.columns=TRUE) %>% subsetByOverlaps(subset(his.gr, score>900))
+genes.his900 = genes.his900.gr$gene
+head(genes.his900)
+
+library(clusterProfiler)
+all.pc.genes = subset(gc.df, gene.type=='protein_coding')$gene
+## go.enr = enrichGO(gene=genes.his900 , 'org.Hs.eg.db', ont="BP", universe=all.pc.genes , readable=TRUE, keyType = 'SYMBOL')
+```
+
+When we try to use the gene names we get a non-helpful error. 
+I'm not sure what is wrong.
+To avoid errors, we might want to convert the gene names (symbols) to Entrez IDs beforehands. 
+
+```{r}
+conv.df <- bitr(all.pc.genes , fromType = "SYMBOL", toType = c("ENTREZID"),
+OrgDb = 'org.Hs.eg.db')
+head(conv.df)
+symbolToEntrez = conv.df$ENTREZID 
+names(symbolToEntrez) = conv.df$SYMBOL
+
+go.enr = enrichGO(gene=symbolToEntrez[genes.his900] , 'org.Hs.eg.db', ont="BP", universe=symbolToEntrez[all.pc.genes] , readable=TRUE)
+```
+
+Now it worked. Let's have a look at the top 10 enriched GO.
+
+```{r}
+go.enr.s = as.data.frame(go.enr) 
+head(go.enr.s[,c("Description","GeneRatio","qvalue")],10)
+```
+
+### Gviz
+
+The [Gviz](https://bioconductor.org/packages/release/bioc/vignettes/Gviz/inst/doc/Gviz.pdf) package provides functions to display several information/tracks in a region.
+
+For example, let's visualize the gene location and histone mark score in a region from chr 3.
+
+```{r}
+library(Gviz)
+
+region.gr = GRanges('chr3:112e6-115e6')
+gatrack = GenomeAxisTrack()
+
+genes.reg = gc.df %>% filter(gene.type=='protein_coding') %>% makeGRangesFromDataFrame(keep.extra.columns=TRUE) %>% subsetByOverlaps(region.gr)
+gene.t = AnnotationTrack(range=genes.reg, name = "Genes", group=genes.reg$gene)
+
+his.t = his.gr %>% subsetByOverlaps(region.gr) %>% DataTrack(data="score", type='h', name="H3K4me3")
+
+plotTracks(list(gatrack, gene.t, his.t), showId=TRUE)
+```
+

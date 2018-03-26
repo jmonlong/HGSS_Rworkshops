@@ -31,7 +31,11 @@ download.file('https://github.com/jmonlong/HGSS_Rworkshops/raw/master/Advanced-T
 
 ## Live script
 
-- [Live script](https://www.dropbox.com/s/t2gl9hx4yoxobyr/HGSSworkshop-advanced-2018.txt?dl=0) to follow the commands I type during the workshop.
+The commands I typed during the workshop:
+
+- `HGSS-Rworkshop2018-advanced-liveScript.Rmd`: the R Markdown source file.
+- `HGSS-Rworkshop2018-advanced-liveScript.html`: the HTML output.
+- `HGSS-Rworkshop2018-advanced-liveScript.md`: the Markdown output for GitHub.
 
 ## To go further
 
