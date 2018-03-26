@@ -35,7 +35,7 @@ The commands I typed during the workshop:
 
 - `HGSS-Rworkshop2018-advanced-liveScript.Rmd`: the R Markdown source file.
 - `HGSS-Rworkshop2018-advanced-liveScript.html`: the HTML output.
-- `HGSS-Rworkshop2018-advanced-liveScript.md`: the Markdown output for GitHub.
+- [`HGSS-Rworkshop2018-advanced-liveScript.md`](HGSS-Rworkshop2018-advanced-liveScript.html): the Markdown output for GitHub.
 
 ## To go further
 
