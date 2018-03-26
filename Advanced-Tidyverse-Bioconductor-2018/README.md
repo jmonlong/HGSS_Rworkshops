@@ -32,3 +32,11 @@ download.file('https://github.com/jmonlong/HGSS_Rworkshops/raw/master/Advanced-T
 ## Live script
 
 - [Live script](https://www.dropbox.com/s/t2gl9hx4yoxobyr/HGSSworkshop-advanced-2018.txt?dl=0) to follow the commands I type during the workshop.
+
+## To go further
+
+### Bioconductor resources
+
+- [Workflows](http://bioconductor.org/help/workflows/) gives detailed hands-on tutorials for different bioinformatics analysis, such as gene expression, epigenetics, proteomics analysis and others.
+- [Courses](http://bioconductor.org/help/course-materials/): slides from courses.
+- [Videos](https://www.youtube.com/user/bioconductor/videos).
