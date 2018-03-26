@@ -28,3 +28,7 @@ download.file('https://github.com/jmonlong/HGSS_Rworkshops/raw/master/Advanced-T
 
 - `HGSS-Rworkshop2018-advanced.pdf` contains the slides.
 - `HGSS-Rworkshop2018-advanced.tex` contains the LaTeX source.
+
+## Live script
+
+- [Live script](https://www.dropbox.com/s/t2gl9hx4yoxobyr/HGSSworkshop-advanced-2018.txt?dl=0) to follow the commands I type during the workshop.
