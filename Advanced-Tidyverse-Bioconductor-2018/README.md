@@ -12,5 +12,5 @@ install.packages(c('data.table','dplyr','ggplot2', 'magrittr', 'tidyr'))
 
 ## Install Bioconductor packages
 source('http://bioconductor.org/biocLite.R')
-biocLite(c('GenomicRanges', 'VariantAnnotation', 'clusterProfiler', 'EnrichedHeatmap', 'AnnotationHub', 'Gviz'))
+biocLite(c('GenomicRanges', 'VariantAnnotation', 'clusterProfiler', 'EnrichedHeatmap', 'AnnotationHub', 'Gviz', 'org.Hs.eg.db'))
 ```
