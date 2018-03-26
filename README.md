@@ -6,4 +6,6 @@ The latest **Introduction to R** workshop was given in [september 2016](https://
 
 An **advanced workshop** on manipulation of large genomics data was given in [march 2017](https://hgssmcgill.wordpress.com/workshops-seminars/advanced-r-workshop/). The slides and code are in the `Advanced-LargeGenomicsData-2017` folder. For the previous version of this workshop see the `Advanced-2015` folder.
 
-**Go to [`Advanced-Tidyverse-Bioconductor-2018`](https://github.com/jmonlong/HGSS_Rworkshops/tree/master/Advanced-Tidyverse-Bioconductor-2018) for material for the upcoming advanced workshop.**
+## Today's workshop
+
+**Go to [`Advanced-Tidyverse-Bioconductor-2018`](https://github.com/jmonlong/HGSS_Rworkshops/tree/master/Advanced-Tidyverse-Bioconductor-2018)**.
