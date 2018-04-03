@@ -2,6 +2,19 @@
 
 *March 26 2018*
 
+## Slides
+
+- The slides in PDF: [`HGSS-Rworkshop2018-advanced.pdf`](https://github.com/jmonlong/HGSS_Rworkshops/blob/master/Advanced-Tidyverse-Bioconductor-2018/HGSS-Rworkshop2018-advanced.pdf).
+- `HGSS-Rworkshop2018-advanced.tex` contains the LaTeX source.
+
+## Live script
+
+The commands I typed during the workshop:
+
+- [`HGSS-Rworkshop2018-advanced-liveScript.md`](HGSS-Rworkshop2018-advanced-liveScript.html): the Markdown output for GitHub.
+- `HGSS-Rworkshop2018-advanced-liveScript.html`: the HTML output.
+- `HGSS-Rworkshop2018-advanced-liveScript.Rmd`: the R Markdown source file.
+
 ## Install packages for the workshop
 
 Run the following commands:
@@ -23,19 +36,6 @@ Download it [here](https://github.com/jmonlong/HGSS_Rworkshops/raw/master/Advanc
 ```r
 download.file('https://github.com/jmonlong/HGSS_Rworkshops/raw/master/Advanced-Tidyverse-Bioconductor-2018/gencodeForWorkshop.tsv.gz','gencodeForWorkshop.tsv.gz')
 ```
-
-## Slides
-
-- `HGSS-Rworkshop2018-advanced.pdf` contains the slides.
-- `HGSS-Rworkshop2018-advanced.tex` contains the LaTeX source.
-
-## Live script
-
-The commands I typed during the workshop:
-
-- `HGSS-Rworkshop2018-advanced-liveScript.Rmd`: the R Markdown source file.
-- `HGSS-Rworkshop2018-advanced-liveScript.html`: the HTML output.
-- [`HGSS-Rworkshop2018-advanced-liveScript.md`](HGSS-Rworkshop2018-advanced-liveScript.html): the Markdown output for GitHub.
 
 ## To go further
 
